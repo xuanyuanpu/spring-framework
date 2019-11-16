@@ -130,7 +130,7 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 					sseBuilder.event(line.substring(6).trim());
 				}
 				else if (line.startsWith("retry:")) {
-					sseBuilder.retry(Duration.ofMillis(Long.valueOf(line.substring(6).trim())));
+					sseBuilder.retry(Duration.ofMillis(Long.parseLong(line.substring(6).trim())));
 				}
 				else if (line.startsWith(":")) {
 					comment = (comment != null ? comment : new StringBuilder());
@@ -155,6 +155,7 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 		}
 	}
 
+	@Nullable
 	private Object decodeData(String data, ResolvableType dataType, Map<String, Object> hints) {
 		if (String.class == dataType.resolve()) {
 			return data.substring(0, data.length() - 1);

@@ -29,6 +29,7 @@ import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.io.DescriptiveResource;
 import org.springframework.core.io.Resource;
 import org.springframework.lang.Nullable;
@@ -65,7 +66,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	public static final String SCOPE_DEFAULT = "";
 
 	/**
-	 * Constant that indicates no autowiring at all.
+	 * Constant that indicates no external autowiring at all.
 	 * @see #setAutowireMode
 	 */
 	public static final int AUTOWIRE_NO = AutowireCapableBeanFactory.AUTOWIRE_NO;
@@ -180,8 +181,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private MutablePropertyValues propertyValues;
 
-	@Nullable
-	private MethodOverrides methodOverrides;
+	private MethodOverrides methodOverrides = new MethodOverrides();
 
 	@Nullable
 	private String initMethodName;
@@ -456,6 +456,16 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 		Class<?> resolvedClass = ClassUtils.forName(className, classLoader);
 		this.beanClass = resolvedClass;
 		return resolvedClass;
+	}
+
+	/**
+	 * Return a resolvable type for this bean definition.
+	 * <p>This implementation delegates to {@link #getBeanClass()}.
+	 * @since 5.2
+	 */
+	@Override
+	public ResolvableType getResolvableType() {
+		return (hasBeanClass() ? ResolvableType.forClass(getBeanClass()) : ResolvableType.NONE);
 	}
 
 	/**
@@ -892,9 +902,6 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * <p>Never returns {@code null}.
 	 */
 	public MethodOverrides getMethodOverrides() {
-		if (this.methodOverrides == null) {
-			this.methodOverrides = new MethodOverrides();
-		}
 		return this.methodOverrides;
 	}
 
@@ -903,7 +910,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * @since 5.0.2
 	 */
 	public boolean hasMethodOverrides() {
-		return (this.methodOverrides != null && !this.methodOverrides.isEmpty());
+		return !this.methodOverrides.isEmpty();
 	}
 
 	/**
@@ -1087,10 +1094,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	public void validate() throws BeanDefinitionValidationException {
 		if (hasMethodOverrides() && getFactoryMethodName() != null) {
 			throw new BeanDefinitionValidationException(
-					"Cannot combine static factory method with method overrides: " +
-					"the static factory method must create the instance");
+					"Cannot combine factory method with container-generated method overrides: " +
+					"the factory method must create the concrete bean instance.");
 		}
-
 		if (hasBeanClass()) {
 			prepareMethodOverrides();
 		}
@@ -1102,14 +1108,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
 	public void prepareMethodOverrides() throws BeanDefinitionValidationException {
-		// Check that lookup methods exists.
+		// Check that lookup methods exist and determine their overloaded status.
 		if (hasMethodOverrides()) {
-			Set<MethodOverride> overrides = getMethodOverrides().getOverrides();
-			synchronized (overrides) {
-				for (MethodOverride mo : overrides) {
-					prepareMethodOverride(mo);
-				}
-			}
+			getMethodOverrides().getOverrides().forEach(this::prepareMethodOverride);
 		}
 	}
 

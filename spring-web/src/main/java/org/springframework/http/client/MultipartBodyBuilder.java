@@ -41,7 +41,7 @@ import org.springframework.util.MultiValueMap;
 /**
  * Builder for the body of a multipart request, producing
  * {@code MultiValueMap<String, HttpEntity>}, which can be provided to the
- * {@code WebClient} through the {@code syncBody} method.
+ * {@code WebClient} through the {@code body} method.
  *
  * Examples:
  * <pre class="code">
@@ -67,7 +67,7 @@ import org.springframework.util.MultiValueMap;
  *
  * Mono&lt;Void&gt; result = webClient.post()
  *     .uri("...")
- *     .syncBody(multipartBody)
+ *     .body(multipartBody)
  *     .retrieve()
  *     .bodyToMono(Void.class)
  * </pre>
@@ -171,7 +171,6 @@ public final class MultipartBodyBuilder {
 	 * @param elementClass the type of elements contained in the publisher
 	 * @return builder that allows for further customization of part headers
 	 */
-	@SuppressWarnings("unchecked")
 	public <T, P extends Publisher<T>> PartBuilder asyncPart(String name, P publisher, Class<T> elementClass) {
 		Assert.hasLength(name, "'name' must not be empty");
 		Assert.notNull(publisher, "'publisher' must not be null");

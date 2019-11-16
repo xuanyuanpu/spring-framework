@@ -23,7 +23,7 @@ import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -45,7 +45,7 @@ public class FreeMarkerConfigurerTests {
 	private final FreeMarkerConfigurer freeMarkerConfigurer = new FreeMarkerConfigurer();
 
 	@Test
-	public void freeMarkerConfigurerWithConfigLocation() throws Exception {
+	public void freeMarkerConfigurerWithConfigLocation() {
 		freeMarkerConfigurer.setConfigLocation(new FileSystemResource("myprops.properties"));
 		Properties props = new Properties();
 		props.setProperty("myprop", "/mydir");
